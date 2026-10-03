@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Matafuegos</title>
+    <!-- Cargamos Tailwind CSS para diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-4 md:p-8 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <h1 class="text-3xl font-bold text-red-600 mb-2 text-center">Gestión de Matafuegos</h1>
+        <h2 class="text-lg font-semibold text-gray-600 mb-6 text-center">E.T. N° 35 "Ingeniero Eduardo Latzina"</h2>
+
+        <!-- Tarjeta del Formulario -->
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border-t-4 border-red-500">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Registrar Nuevo Equipo</h2>
+            
+            <form id="formulario-matafuegos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nº de Serie / Interno</label>
+                    <input type="text" id="serie" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: 81174">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Agente</label>
+                    <select id="tipo" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500">
+                        <option value="">Seleccione un tipo...</option>
+                        <option value="Polvo ABC">Polvo Químico ABC</option>
+                        <option value="CO2">CO2</option>
+                        <option value="Agua">Agua</option>
+                        <option value="HCFC (Haloclean)">HCFC (Haloclean)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad</label>
+                    <input type="text" id="capacidad" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: 5 Kg">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ubicación / Sector</label>
+                    <input type="text" id="ubicacion" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: Preceptoría">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Vencimiento (Mes y Año)</label>
+                    <input type="month" id="vencimiento" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500">
+                </div>
+
+                <div class="lg:col-span-1 flex items-end">
+                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 shadow-md">
+                        Guardar Registro
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Tarjeta del Inventario -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 md:mb-0">Inventario Actual</h2>
+                <div class="w-full md:w-1/2">
+                    <input type="text" id="buscador" class="w-full border border-gray-300 rounded-full p-2 pl-4 focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="🔍 Buscar por serie, tipo o ubicación...">
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-700">
+                            <th class="p-3 border-b font-semibold">Nº Serie</th>
+                            <th class="p-3 border-b font-semibold">Tipo</th>
+                            <th class="p-3 border-b font-semibold">Ubicación</th>
+                            <th class="p-3 border-b font-semibold">Vencimiento</th>
+                            <th class="p-3 border-b font-semibold text-center">Estado</th>
+                            <th class="p-3 border-b text-center font-semibold">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-body">
+                    </tbody>
+                </table>
+            </div>
+            
+            <p id="mensaje-vacio" class="text-center text-gray-500 mt-6 hidden">No se encontraron matafuegos con esos datos.</p>
+        </div>
+    </div>
+
+    <!-- LÓGICA DE JAVASCRIPT -->
+    <script>
+        const formulario = document.getElementById('formulario-matafuegos');
+        const tablaBody = document.getElementById('tabla-body');
+        const mensajeVacio = document.getElementById('mensaje-vacio');
+        const buscador = document.getElementById('buscador');
+
+        let inventario = JSON.parse(localStorage.getItem('matafuegos')) || [];
+
+        function actualizarTabla(textoFiltro = "") {
+            tablaBody.innerHTML = '';
+            
+            const inventarioFiltrado = inventario.filter(matafuego => {
+                const coincidenciaSerie = matafuego.serie.toLowerCase().includes(textoFiltro.toLowerCase());
+                const coincidenciaUbicacion = matafuego.ubicacion.toLowerCase().includes(textoFiltro.toLowerCase());
+                const coincidenciaTipo = matafuego.tipo.toLowerCase().includes(textoFiltro.toLowerCase());
+                return coincidenciaSerie || coincidenciaUbicacion || coincidenciaTipo;
+            });
+
+            if (inventarioFiltrado.length === 0) {
+                mensajeVacio.classList.remove('hidden');
+            } else {
+                mensajeVacio.classList.add('hidden');
+            }
+
+            inventarioFiltrado.forEach((matafuego) => {
+                const indiceReal = inventario.indexOf(matafuego);
+
+                let estadoHTML = '<span class="text-gray-400 text-xs">Sin datos</span>';
+                let fechaFormateada = '-';
+                
+                if (matafuego.vencimiento) {
+                    const hoy = new Date();
+                    
+                    const partesFecha = matafuego.vencimiento.split('-');
+                    const anio = parseInt(partesFecha[0]);
+                    const mes = parseInt(partesFecha[1]);
+
+                    const fechaVenc = new Date(anio, mes, 0, 23, 59, 59); 
+                    
+                    const diferenciaMilisegundos = fechaVenc - hoy;
+                    const diasRestantes = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+
+                    const mesString = mes.toString().padStart(2, '0');
+                    fechaFormateada = `${mesString}/${anio}`;
+
+                    if (diasRestantes < 0) {
+                        estadoHTML = '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold border border-red-300">Vencido</span>';
+                    } else if (diasRestantes <= 30) {
+                        estadoHTML = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold border border-yellow-300">Por vencer</span>';
+                    } else {
+                        estadoHTML = '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold border border-green-300">En condiciones</span>';
+                    }
+                }
+
+                const fila = document.createElement('tr');
+                fila.className = "hover:bg-blue-50 transition duration-150";
+
+                fila.innerHTML = `
+                    <td class="p-3 border-b font-bold text-gray-800">${matafuego.serie}</td>
+                    <td class="p-3 border-b text-gray-700">${matafuego.tipo}</td>
+                    <td class="p-3 border-b text-gray-700">${matafuego.ubicacion}</td>
+                    <td class="p-3 border-b text-gray-700 font-medium">${fechaFormateada}</td>
+                    <td class="p-3 border-b text-center">${estadoHTML}</td>
+                    <td class="p-3 border-b text-center">
+                        <button onclick="eliminarMatafuego(${indiceReal})" class="text-red-500 hover:text-red-700 font-bold text-sm">
+                            Borrar
+                        </button>
+                    </td>
+                `;
+                tablaBody.appendChild(fila);
+            });
+        }
+
+        buscador.addEventListener('input', function(evento) {
+            actualizarTabla(evento.target.value);
+        });
+
+        formulario.addEventListener('submit', function(evento) {
+            evento.preventDefault(); 
+
+            const nuevoMatafuego = {
+                serie: document.getElementById('serie').value,
+                tipo: document.getElementById('tipo').value,
+                capacidad: document.getElementById('capacidad').value,
+                ubicacion: document.getElementById('ubicacion').value,
+                vencimiento: document.getElementById('vencimiento').value 
+            };
+
+            // ¡ACÁ ESTÁ EL CAMBIO! 'unshift' lo coloca en la fila 1
+            inventario.unshift(nuevoMatafuego);
+            localStorage.setItem('matafuegos', JSON.stringify(inventario));
+            
+            formulario.reset();
+            buscador.value = ''; 
+            actualizarTabla(); 
+        });
+
+        function eliminarMatafuego(indice) {
+            if (confirm("¿Confirmar eliminación del registro?")) {
+                inventario.splice(indice, 1);
+                localStorage.setItem('matafuegos', JSON.stringify(inventario));
+                actualizarTabla(buscador.value); 
+            }
+        }
+
+        actualizarTabla();
+    </script>
+</body>
+</html>

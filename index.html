@@ -3,197 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Matafuegos</title>
-    <!-- Cargamos Tailwind CSS para diseño -->
+    <title>Verificador de Matafuegos</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 p-4 md:p-8 font-sans">
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
 
-    <div class="max-w-5xl mx-auto">
-        <h1 class="text-3xl font-bold text-red-600 mb-2 text-center">Gestión de Matafuegos</h1>
-        <h2 class="text-lg font-semibold text-gray-600 mb-6 text-center">E.T. N° 35 "Ingeniero Eduardo Latzina"</h2>
-
-        <!-- Tarjeta del Formulario -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-8 border-t-4 border-red-500">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">Registrar Nuevo Equipo</h2>
-            
-            <form id="formulario-matafuegos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nº de Serie / Interno</label>
-                    <input type="text" id="serie" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: 81174">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Agente</label>
-                    <select id="tipo" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500">
-                        <option value="">Seleccione un tipo...</option>
-                        <option value="Polvo ABC">Polvo Químico ABC</option>
-                        <option value="CO2">CO2</option>
-                        <option value="Agua">Agua</option>
-                        <option value="HCFC (Haloclean)">HCFC (Haloclean)</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Capacidad</label>
-                    <input type="text" id="capacidad" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: 5 Kg">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Ubicación / Sector</label>
-                    <input type="text" id="ubicacion" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500" placeholder="Ej: Preceptoría">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vencimiento (Mes y Año)</label>
-                    <input type="month" id="vencimiento" required class="w-full border border-gray-300 rounded-md p-2 focus:ring-red-500 focus:border-red-500">
-                </div>
-
-                <div class="lg:col-span-1 flex items-end">
-                    <button type="submit" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition duration-300 shadow-md">
-                        Guardar Registro
-                    </button>
-                </div>
-            </form>
+    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-xl border-t-8 border-red-600">
+        
+        <!-- Encabezado -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Control de Inspección</h1>
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-1">E.T. N° 35 "Ing. E. Latzina"</h2>
         </div>
 
-        <!-- Tarjeta del Inventario -->
-        <div class="bg-white p-6 rounded-lg shadow-md">
-            <div class="flex flex-col md:flex-row justify-between items-center mb-4">
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 md:mb-0">Inventario Actual</h2>
-                <div class="w-full md:w-1/2">
-                    <input type="text" id="buscador" class="w-full border border-gray-300 rounded-full p-2 pl-4 focus:ring-blue-500 focus:border-blue-500 shadow-sm" placeholder="🔍 Buscar por serie, tipo o ubicación...">
+        <!-- Indicador de estado de la base de datos -->
+        <div id="estado-conexion" class="mb-6 flex items-center justify-center gap-2 text-xs font-medium text-gray-500 bg-gray-50 py-2 rounded-lg">
+            <span class="inline-block w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse" id="dot-conexion"></span>
+            <span id="texto-conexion">Sincronizando con Google Sheets...</span>
+            <button onclick="cargarDatos()" class="ml-2 text-blue-500 hover:text-blue-700" title="Actualizar base de datos">🔄</button>
+        </div>
+
+        <!-- Buscador de Serie -->
+        <form id="form-busqueda" class="mb-6">
+            <label class="block text-sm font-bold text-gray-700 mb-2 text-center">Ingrese el Nº de Serie o Interno:</label>
+            <div class="flex flex-col gap-3">
+                <input type="text" id="input-serie" required 
+                       class="w-full border-2 border-gray-300 rounded-xl p-4 text-center text-xl font-bold tracking-widest uppercase focus:ring-red-500 focus:border-red-500 shadow-inner" 
+                       placeholder="EJ: 81174" autocomplete="off">
+                <button type="submit" id="btn-buscar" disabled
+                        class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-red-700 transition duration-300 shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed text-lg">
+                    Verificar Estado
+                </button>
+            </div>
+        </form>
+
+        <!-- Tarjeta de Resultado (Oculta por defecto) -->
+        <div id="resultado-container" class="hidden flex-col items-center p-5 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50">
+            
+            <!-- Badge de Estado -->
+            <div id="badge-estado" class="px-6 py-2 rounded-full text-lg font-black uppercase mb-4 text-center w-full shadow-sm">
+                <!-- Se llena con JS -->
+            </div>
+
+            <!-- Detalles del Equipo -->
+            <div id="detalles-equipo" class="w-full space-y-2 text-sm text-gray-700">
+                <div class="flex justify-between border-b pb-1">
+                    <span class="font-semibold">Tipo:</span>
+                    <span id="res-tipo" class="font-medium">-</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="font-semibold">Ubicación:</span>
+                    <span id="res-ubicacion" class="font-medium text-right">-</span>
+                </div>
+                <div class="flex justify-between border-b pb-1">
+                    <span class="font-semibold">Vencimiento:</span>
+                    <span id="res-vencimiento" class="font-medium">-</span>
                 </div>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-700">
-                            <th class="p-3 border-b font-semibold">Nº Serie</th>
-                            <th class="p-3 border-b font-semibold">Tipo</th>
-                            <th class="p-3 border-b font-semibold">Ubicación</th>
-                            <th class="p-3 border-b font-semibold">Vencimiento</th>
-                            <th class="p-3 border-b font-semibold text-center">Estado</th>
-                            <th class="p-3 border-b text-center font-semibold">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-body">
-                    </tbody>
-                </table>
-            </div>
-            
-            <p id="mensaje-vacio" class="text-center text-gray-500 mt-6 hidden">No se encontraron matafuegos con esos datos.</p>
+            <button type="button" onclick="limpiarBusqueda()" class="mt-5 text-gray-500 text-sm font-semibold hover:text-gray-800 underline">
+                Realizar otra consulta
+            </button>
         </div>
+
     </div>
 
-    <!-- LÓGICA DE JAVASCRIPT -->
+    <!-- LÓGICA JAVASCRIPT -->
     <script>
-        const formulario = document.getElementById('formulario-matafuegos');
-        const tablaBody = document.getElementById('tabla-body');
-        const mensajeVacio = document.getElementById('mensaje-vacio');
-        const buscador = document.getElementById('buscador');
+        const URL_API = "https://script.google.com/macros/s/AKfycbyyFC6cXxtdSgEbnSxD8ExuWBW1391vLS7xZ1cO67SUX01UEleZZHJaU4pYQU2IOFE2/exec";
+        
+        let baseDatos = [];
+        const btnBuscar = document.getElementById('btn-buscar');
+        const inputSerie = document.getElementById('input-serie');
+        const resultadoContainer = document.getElementById('resultado-container');
+        const formBusqueda = document.getElementById('form-busqueda');
 
-        let inventario = JSON.parse(localStorage.getItem('matafuegos')) || [];
-
-        function actualizarTabla(textoFiltro = "") {
-            tablaBody.innerHTML = '';
+        // Función para descargar los datos de tu Google Sheets al abrir la app
+        async function cargarDatos() {
+            setEstadoCarga(true, "Descargando base de datos...");
+            btnBuscar.disabled = true;
             
-            const inventarioFiltrado = inventario.filter(matafuego => {
-                const coincidenciaSerie = matafuego.serie.toLowerCase().includes(textoFiltro.toLowerCase());
-                const coincidenciaUbicacion = matafuego.ubicacion.toLowerCase().includes(textoFiltro.toLowerCase());
-                const coincidenciaTipo = matafuego.tipo.toLowerCase().includes(textoFiltro.toLowerCase());
-                return coincidenciaSerie || coincidenciaUbicacion || coincidenciaTipo;
-            });
+            try {
+                const respuesta = await fetch(URL_API);
+                const datos = await respuesta.json();
+                
+                if (Array.isArray(datos)) {
+                    baseDatos = datos;
+                    setEstadoCarga(false, `Base de datos lista (${baseDatos.length} equipos)`);
+                    btnBuscar.disabled = false;
+                } else {
+                    throw new Error("Formato incorrecto");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                setEstadoError("Error de conexión. Revisar permisos de Sheets.");
+            }
+        }
 
-            if (inventarioFiltrado.length === 0) {
-                mensajeVacio.classList.remove('hidden');
-            } else {
-                mensajeVacio.classList.add('hidden');
+        // Lógica al enviar el formulario (Click en Verificar)
+        formBusqueda.addEventListener('submit', function(evento) {
+            evento.preventDefault();
+            const serieBuscada = inputSerie.value.trim().toLowerCase();
+            
+            // Buscar el equipo en los datos descargados
+            const equipoEncontrado = baseDatos.find(
+                matafuego => String(matafuego.serie).toLowerCase() === serieBuscada
+            );
+
+            mostrarResultado(equipoEncontrado);
+        });
+
+        // Mostrar la tarjeta visual con los colores correspondientes
+        function mostrarResultado(equipo) {
+            resultadoContainer.classList.remove('hidden');
+            resultadoContainer.classList.add('flex');
+            
+            const badgeEstado = document.getElementById('badge-estado');
+            
+            if (!equipo) {
+                // Si no existe el número en el Excel
+                badgeEstado.className = "px-6 py-2 rounded-full text-lg font-black uppercase mb-4 text-center w-full shadow-sm bg-gray-200 text-gray-700";
+                badgeEstado.innerText = "NO ENCONTRADO";
+                
+                document.getElementById('res-tipo').innerText = "-";
+                document.getElementById('res-ubicacion').innerText = "Verifique el número ingresado";
+                document.getElementById('res-vencimiento').innerText = "-";
+                return;
             }
 
-            inventarioFiltrado.forEach((matafuego) => {
-                const indiceReal = inventario.indexOf(matafuego);
+            // Si se encuentra, cargar datos
+            document.getElementById('res-tipo').innerText = equipo.tipo || "Sin dato";
+            document.getElementById('res-ubicacion').innerText = equipo.ubicacion || "Sin ubicación";
 
-                let estadoHTML = '<span class="text-gray-400 text-xs">Sin datos</span>';
-                let fechaFormateada = '-';
+            // Calcular vencimiento
+            if (equipo.vencimiento) {
+                const hoy = new Date();
+                const partesFecha = String(equipo.vencimiento).split('-');
                 
-                if (matafuego.vencimiento) {
-                    const hoy = new Date();
-                    
-                    const partesFecha = matafuego.vencimiento.split('-');
+                if (partesFecha.length >= 2) {
                     const anio = parseInt(partesFecha[0]);
                     const mes = parseInt(partesFecha[1]);
-
-                    const fechaVenc = new Date(anio, mes, 0, 23, 59, 59); 
+                    const fechaVenc = new Date(anio, mes, 0, 23, 59, 59); // Último día de ese mes
                     
                     const diferenciaMilisegundos = fechaVenc - hoy;
                     const diasRestantes = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+                    
+                    document.getElementById('res-vencimiento').innerText = `${mes.toString().padStart(2, '0')}/${anio}`;
 
-                    const mesString = mes.toString().padStart(2, '0');
-                    fechaFormateada = `${mesString}/${anio}`;
-
+                    // Lógica de colores semáforo
                     if (diasRestantes < 0) {
-                        estadoHTML = '<span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-bold border border-red-300">Vencido</span>';
+                        badgeEstado.className = "px-6 py-3 rounded-xl text-xl font-black uppercase mb-4 text-center w-full shadow border-2 bg-red-100 text-red-800 border-red-500 animate-pulse";
+                        badgeEstado.innerText = "⚠️ VENCIDO";
                     } else if (diasRestantes <= 30) {
-                        estadoHTML = '<span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold border border-yellow-300">Por vencer</span>';
+                        badgeEstado.className = "px-6 py-3 rounded-xl text-xl font-black uppercase mb-4 text-center w-full shadow border-2 bg-yellow-100 text-yellow-800 border-yellow-500";
+                        badgeEstado.innerText = "⏳ POR VENCER";
                     } else {
-                        estadoHTML = '<span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold border border-green-300">En condiciones</span>';
+                        badgeEstado.className = "px-6 py-3 rounded-xl text-xl font-black uppercase mb-4 text-center w-full shadow border-2 bg-green-100 text-green-800 border-green-500";
+                        badgeEstado.innerText = "✅ EN CONDICIONES";
                     }
+                } else {
+                    marcarFormatoInvalido(badgeEstado);
                 }
-
-                const fila = document.createElement('tr');
-                fila.className = "hover:bg-blue-50 transition duration-150";
-
-                fila.innerHTML = `
-                    <td class="p-3 border-b font-bold text-gray-800">${matafuego.serie}</td>
-                    <td class="p-3 border-b text-gray-700">${matafuego.tipo}</td>
-                    <td class="p-3 border-b text-gray-700">${matafuego.ubicacion}</td>
-                    <td class="p-3 border-b text-gray-700 font-medium">${fechaFormateada}</td>
-                    <td class="p-3 border-b text-center">${estadoHTML}</td>
-                    <td class="p-3 border-b text-center">
-                        <button onclick="eliminarMatafuego(${indiceReal})" class="text-red-500 hover:text-red-700 font-bold text-sm">
-                            Borrar
-                        </button>
-                    </td>
-                `;
-                tablaBody.appendChild(fila);
-            });
-        }
-
-        buscador.addEventListener('input', function(evento) {
-            actualizarTabla(evento.target.value);
-        });
-
-        formulario.addEventListener('submit', function(evento) {
-            evento.preventDefault(); 
-
-            const nuevoMatafuego = {
-                serie: document.getElementById('serie').value,
-                tipo: document.getElementById('tipo').value,
-                capacidad: document.getElementById('capacidad').value,
-                ubicacion: document.getElementById('ubicacion').value,
-                vencimiento: document.getElementById('vencimiento').value 
-            };
-
-            // ¡ACÁ ESTÁ EL CAMBIO! 'unshift' lo coloca en la fila 1
-            inventario.unshift(nuevoMatafuego);
-            localStorage.setItem('matafuegos', JSON.stringify(inventario));
-            
-            formulario.reset();
-            buscador.value = ''; 
-            actualizarTabla(); 
-        });
-
-        function eliminarMatafuego(indice) {
-            if (confirm("¿Confirmar eliminación del registro?")) {
-                inventario.splice(indice, 1);
-                localStorage.setItem('matafuegos', JSON.stringify(inventario));
-                actualizarTabla(buscador.value); 
+            } else {
+                marcarFormatoInvalido(badgeEstado);
             }
         }
 
-        actualizarTabla();
+        function marcarFormatoInvalido(badge) {
+            badge.className = "px-6 py-2 rounded-full text-lg font-black uppercase mb-4 text-center w-full shadow-sm bg-gray-200 text-gray-600";
+            badge.innerText = "SIN FECHA";
+            document.getElementById('res-vencimiento').innerText = "Dato faltante en Sheets";
+        }
+
+        function limpiarBusqueda() {
+            inputSerie.value = '';
+            resultadoContainer.classList.remove('flex');
+            resultadoContainer.classList.add('hidden');
+            inputSerie.focus();
+        }
+
+        // Utilidades de la interfaz
+        function setEstadoCarga(cargando, mensaje) {
+            const dot = document.getElementById('dot-conexion');
+            document.getElementById('texto-conexion').innerText = mensaje;
+            if (cargando) {
+                dot.className = "inline-block w-2.5 h-2.5 bg-yellow-400 rounded-full animate-pulse";
+            } else {
+                dot.className = "inline-block w-2.5 h-2.5 bg-green-500 rounded-full";
+            }
+        }
+
+        function setEstadoError(mensaje) {
+            document.getElementById('texto-conexion').innerText = mensaje;
+            document.getElementById('dot-conexion').className = "inline-block w-2.5 h-2.5 bg-red-500 rounded-full";
+        }
+
+        // Cargar datos al iniciar
+        cargarDatos();
     </script>
 </body>
 </html>
